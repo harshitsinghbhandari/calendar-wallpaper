@@ -152,8 +152,14 @@ def life_wallpaper(
     percent_text = f"{percent}% completed"
 
     p_w, p_h = draw.textbbox((0, 0), percent_text, font=percent_font)[2:]
+    
+    # Position: Halfway between end of dots and end of page
+    dots_bottom_y = start_y + grid_height
+    available_bottom_space = height - dots_bottom_y
+    percent_y = dots_bottom_y + (available_bottom_space - p_h) // 2
+    
     draw.text(
-        ((width - p_w) // 2, height - 260),
+        ((width - p_w) // 2, percent_y),
         percent_text,
         fill=TEXT,
         font=percent_font
