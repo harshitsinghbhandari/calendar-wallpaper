@@ -8,8 +8,8 @@ app = FastAPI()
 def get_wallpaper(
     done: int,
     total: int = 365,
-    width: int = 1080,
-    height: int = 1920
+    width: int = 1179,
+    height: int = 2556
 ):
     """
     Generates the wallpaper on demand and returns it as a PNG image.

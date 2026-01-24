@@ -34,8 +34,8 @@ def get_stoic_quote(max_retries=5):
 def life_wallpaper(
     total,
     done,
-    width=1080,
-    height=1920,
+    width=1179,
+    height=2556,
     output_path="life_wallpaper.png"
 ):
     assert 0 <= done <= total
