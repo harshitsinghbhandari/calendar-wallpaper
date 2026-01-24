@@ -61,16 +61,6 @@ def life_wallpaper(
         author_font = ImageFont.load_default()
         percent_font = ImageFont.load_default()
 
-    # ---- Top: Year ----
-    year = str(datetime.now().year)
-    year_w, year_h = draw.textbbox((0, 0), year, font=year_font)[2:]
-    draw.text(
-        ((width - year_w) // 2, 80),
-        year,
-        fill=TEXT,
-        font=year_font
-    )
-
     # ---- 1. Calculate Grid Dimensions ----
     if total <= 40:
         dots_per_row = 5
