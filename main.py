@@ -3,6 +3,7 @@ import math
 import requests
 import textwrap
 from datetime import datetime
+import calendar
 
 def get_stoic_quote(max_retries=5):
     """
@@ -164,6 +165,194 @@ def life_wallpaper(
         fill=TEXT,
         font=percent_font
     )
+
+    if output_path:
+        img.save(output_path)
+        return output_path
+    else:
+        return img
+
+def year_wallpaper(
+    year=None,
+    width=1179,
+    height=2556,
+    output_path="year_wallpaper.png"
+):
+    """
+    Generates a wallpaper showing the progress of the year with a 3x4 month grid.
+    Each month cluster has 7 dots in a row.
+    """
+    import calendar
+    from datetime import datetime
+    
+    # Defaults
+    if year is None:
+        now = datetime.now()
+        year = now.year
+        current_day_of_year = now.timetuple().tm_yday
+        # Check for leap year to be precise
+        is_leap = calendar.isleap(year)
+        total_days_in_year = 366 if is_leap else 365
+    else:
+        # If a specific year is requested, we might need current date context or just show full/empty
+        # For simplicity, if it's the current year, use current progress. 
+        # If past, 100%. If future, 0%.
+        now = datetime.now()
+        if year < now.year:
+            current_day_of_year = 367 # All done
+        elif year > now.year:
+            current_day_of_year = 0
+        else:
+            current_day_of_year = now.timetuple().tm_yday
+    
+    # Colors
+    BG = (0, 0, 0)
+    ORANGE = (255, 165, 0)
+    GREY = (50, 50, 50)
+    TEXT = (200, 200, 200)
+
+    img = Image.new("RGB", (width, height), BG)
+    draw = ImageDraw.Draw(img)
+
+    # Fonts
+    try:
+        header_font = ImageFont.truetype("Zalando.ttf", 80)
+        month_font = ImageFont.truetype("Zalando.ttf", 40)
+        quote_font = ImageFont.truetype("Zalando.ttf", 40)
+        author_font = ImageFont.truetype("Zalando.ttf", 30)
+    except:
+        header_font = ImageFont.load_default()
+        month_font = ImageFont.load_default()
+        quote_font = ImageFont.load_default()
+        author_font = ImageFont.load_default()
+
+    # Layout Config
+    # 3 cols x 4 rows
+    # Each month: 7 columns of dots.
+    # Max days in a month is 31. 31 / 7 = 4.4 -> 5 rows of dots per month max.
+    
+    dot_radius = 8
+    dot_spacing = 28 # Space between dot centers
+    
+    # Month block size estimation
+    # Width: 7 dots * spacing
+    month_block_w = 7 * dot_spacing
+    # Height: 5 rows * spacing (approx) + text header
+    month_block_h = (6 * dot_spacing) + 40 # +40 for month name
+    
+    # Grid gaps
+    col_gap = 60
+    row_gap = 80
+    
+    # Total grid dimensions
+    total_grid_w = (3 * month_block_w) + (2 * col_gap)
+    total_grid_h = (4 * month_block_h) + (3 * row_gap)
+    
+    start_x = (width - total_grid_w) // 2
+    # Vertically center but leave space for header/quote
+    # specific request: "User wants dots a little below and quote just above it" implicitly from previous context?
+    # Let's align similarly to life_wallpaper, centered-ish.
+    start_y = (height - total_grid_h) // 2 + 100 
+
+    # --- Header (Year) ---
+    header_text = f"{year}"
+    bbox = draw.textbbox((0, 0), header_text, font=header_font)
+    h_w = bbox[2] - bbox[0]
+    draw.text(((width - h_w) // 2, 150), header_text, fill=TEXT, font=header_font)
+
+    # --- Draw Months ---
+    # We need to track global day count to know if a dot is "done"
+    day_counter = 0
+    
+    months = [
+        "January", "February", "March", "April", "May", "June",
+        "July", "August", "September", "October", "November", "December"
+    ]
+    
+    # Days in each month
+    # calendar.monthrange(year, month) returns (weekday, days_in_month)
+    
+    for i, month_name in enumerate(months):
+        m_idx = i + 1 # 1-12
+        _, num_days = calendar.monthrange(year, m_idx)
+        
+        # Grid position (row 0-3, col 0-2)
+        grid_r = i // 3
+        grid_c = i % 3
+        
+        mx = start_x + grid_c * (month_block_w + col_gap)
+        my = start_y + grid_r * (month_block_h + row_gap)
+        
+        # Draw Month Name
+        # bbox_m = draw.textbbox((0, 0), month_name, font=month_font)
+        # mw = bbox_m[2] - bbox_m[0]
+        # Center month name over its block
+        # draw.text((mx + (month_block_w - mw)//2, my), month_name, fill=TEXT, font=month_font)
+        # Actually user didn't explicitly ask for names, but it helps. Let's keep it minimal or use numbers closer to dots? 
+        # Requirement: "Show the year... month clustered".
+        # Let's put month name.
+        draw.text((mx, my), month_name, fill=TEXT, font=month_font)
+        
+        dots_start_y = my + 50
+        
+        # Draw Dots for the month
+        for d in range(num_days):
+            day_counter += 1
+            
+            # 7 dots per row within month
+            d_row = d // 7
+            d_col = d % 7
+            
+            dx = mx + d_col * dot_spacing
+            dy = dots_start_y + d_row * dot_spacing
+            
+            # Determine color
+            # If day_counter <= current_day_of_year -> Orange
+            if day_counter < current_day_of_year:
+                 color = ORANGE
+            elif day_counter == current_day_of_year:
+                 # Today is active/orange
+                 color = ORANGE 
+            else:
+                 color = GREY
+            
+            draw.ellipse(
+                [dx, dy, dx + dot_radius * 2, dy + dot_radius * 2],
+                fill=color
+            )
+
+    # --- Quote (Optional but good for consistency) ---
+    # "appropriate columns" - standard layout.
+    # Reuse quote logic? 
+    quote_data = get_stoic_quote()
+    if quote_data:
+        q_text, q_auth = quote_data
+        q_lines = textwrap.wrap(q_text, width=40)
+        
+        # Calculate height to place it nicely
+        # Maybe at bottom or top? 
+        # Let's put it above the grid, below header.
+        
+        q_y = start_y - 150 # Just above months
+        
+        # Check against header overlap... 
+        # Header is at 150. q_y might be around (height/2) - half grid.
+        # If grid is huge, might be tight.
+        
+        # Let's write from bottom up or just fixed position?
+        # Fixed position below header
+        current_y = 280
+        for line in q_lines:
+             bbox = draw.textbbox((0,0), line, font=quote_font)
+             lw = bbox[2] - bbox[0]
+             lh = bbox[3] - bbox[1]
+             draw.text(((width - lw)//2, current_y), line, fill=TEXT, font=quote_font)
+             current_y += lh + 10
+             
+        q_auth = f"- {q_auth}"
+        bbox = draw.textbbox((0,0), q_auth, font=author_font)
+        aw = bbox[2] - bbox[0]
+        draw.text(((width - aw)//2, current_y + 10), q_auth, fill=GREY, font=author_font)
 
     if output_path:
         img.save(output_path)
