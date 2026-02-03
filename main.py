@@ -322,34 +322,42 @@ def year_wallpaper(
             )
 
     # --- Quote (Optional but good for consistency) ---
-    # "appropriate columns" - standard layout.
-    # Reuse quote logic? 
     quote_data = get_stoic_quote()
     if quote_data:
         q_text, q_auth = quote_data
         q_lines = textwrap.wrap(q_text, width=40)
         
-        # Calculate height to place it nicely
-        # Maybe at bottom or top? 
-        # Let's put it above the grid, below header.
-        
-        q_y = start_y - 150 # Just above months
-        
-        # Check against header overlap... 
-        # Header is at 150. q_y might be around (height/2) - half grid.
-        # If grid is huge, might be tight.
-        
-        # Let's write from bottom up or just fixed position?
-        # Fixed position below header
-        current_y = 280
+        # Calculate total height
+        total_q_h = 0
+        line_heights = []
         for line in q_lines:
              bbox = draw.textbbox((0,0), line, font=quote_font)
-             lw = bbox[2] - bbox[0]
              lh = bbox[3] - bbox[1]
-             draw.text(((width - lw)//2, current_y), line, fill=TEXT, font=quote_font)
-             current_y += lh + 10
-             
+             line_heights.append(lh)
+             total_q_h += lh + 10 # line spacing
+        
+        # Add author
         q_auth = f"- {q_auth}"
+        bbox = draw.textbbox((0,0), q_auth, font=author_font)
+        ah = bbox[3] - bbox[1]
+        total_q_h += ah + 20 # padding before author
+        
+        # Position slightly above grid
+        # start_y is top of grid. 
+        # We want the bottom of the quote block to be e.g. 50px above start_y
+        current_y = start_y - total_q_h - 50
+        
+        # Ensure it doesn't overlap header (header is around y=150 + height ~80 = 230)
+        # If current_y < 250, we might need to adjust or clamp. 
+        # But let's assume standard mobile dims (height=2556) gives plenty of space.
+        
+        # Draw
+        for idx, line in enumerate(q_lines):
+             bbox = draw.textbbox((0,0), line, font=quote_font)
+             lw = bbox[2] - bbox[0]
+             draw.text(((width - lw)//2, current_y), line, fill=TEXT, font=quote_font)
+             current_y += line_heights[idx] + 10
+             
         bbox = draw.textbbox((0,0), q_auth, font=author_font)
         aw = bbox[2] - bbox[0]
         draw.text(((width - aw)//2, current_y + 10), q_auth, fill=GREY, font=author_font)
