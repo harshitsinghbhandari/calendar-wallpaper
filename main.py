@@ -254,11 +254,11 @@ def year_wallpaper(
     # Let's align similarly to life_wallpaper, centered-ish.
     start_y = (height - total_grid_h) // 2 + 100 
 
-    # --- Header (Year) ---
-    header_text = f"{year}"
-    bbox = draw.textbbox((0, 0), header_text, font=header_font)
-    h_w = bbox[2] - bbox[0]
-    draw.text(((width - h_w) // 2, 150), header_text, fill=TEXT, font=header_font)
+    # # --- Header (Year) ---
+    # header_text = f"{year}"
+    # bbox = draw.textbbox((0, 0), header_text, font=header_font)
+    # h_w = bbox[2] - bbox[0]
+    # draw.text(((width - h_w) // 2, 150), header_text, fill=TEXT, font=header_font)
 
     # --- Draw Months ---
     # We need to track global day count to know if a dot is "done"
